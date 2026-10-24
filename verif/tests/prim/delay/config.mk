@@ -11,9 +11,9 @@ PARAM_SETS = \
 	Width=8,Depth=3 \
 	Width=32,Depth=16 \
 	Width=64,Depth=64 \
-	Width=1,Depth=0,ResetEn=1 \
-	Width=1,Depth=1,ResetEn=1 \
-	Width=8,Depth=3,ResetEn=1 \
-	Width=32,Depth=16,ResetEn=1
+	Width=1,Depth=0,ConnectRst=0,ConnectClkEn=0 \
+	Width=8,Depth=3,ConnectRst=0 \
+	Width=8,Depth=3,ConnectClkEn=0 \
+	Width=32,Depth=16,ConnectRst=0,ConnectClkEn=0
 
 COMPILE_ARGS += -Wno-ASCRANGE
