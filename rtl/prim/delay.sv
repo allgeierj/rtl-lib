@@ -2,11 +2,11 @@ module delay
 #(
   parameter type DataType = logic,
   parameter int Depth = 1,
-  parameter bit ResetEn = 1'b0,
   localparam int ArrayDepth = (Depth > 0) ? Depth : 1
 )
 (
   input logic clk,
+  input logic clk_en = 1'b1,
   input logic rst = 1'b0,
   input DataType c0_data_i,
   output DataType cX_data_o 
@@ -31,8 +31,8 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-  reg_q <= reg_d;
-  if(ResetEn && rst) reg_q <= '0;
+  if(clk_en) reg_q <= reg_d;
+  if(rst) reg_q <= '0;
 end
 
 endmodule
