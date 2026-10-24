@@ -1,0 +1,10 @@
+verif/work/
+__pycache__/
+results.xml
+*.vcd
+*.fst
+.venv
+xsim.dir/
+xvlog.*
+*.jou
+*.log
