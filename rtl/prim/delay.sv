@@ -1,3 +1,5 @@
+// Delays data by Depth enabled cycles (combinational when Depth == 0).
+// rst clears the line and overrides clk_en; leave it unconnected to keep SRL inference.
 module delay
 #(
   parameter type DataType = logic,

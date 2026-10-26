@@ -1,0 +1,18 @@
+VERILOG_SOURCES = \
+	$(RTL_DIR)/prim/delay.sv \
+	$(RTL_DIR)/prim/delay_valid.sv \
+	$(TEST_DIR)/delay_valid_tb.sv
+
+COCOTB_TOPLEVEL = delay_valid_tb
+COCOTB_TEST_MODULES = test_delay_valid
+
+PARAM_SETS = \
+	Width=1,Depth=0 \
+	Width=1,Depth=1 \
+	Width=8,Depth=3 \
+	Width=32,Depth=16 \
+	Width=1,Depth=0,ConnectRst=0,ConnectClkEn=0 \
+	Width=8,Depth=3,ConnectRst=0 \
+	Width=8,Depth=3,ConnectClkEn=0
+
+COMPILE_ARGS += -Wno-ASCRANGE
