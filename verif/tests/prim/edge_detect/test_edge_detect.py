@@ -5,11 +5,11 @@ cocotb tests for the edge_detect module, written against its header and ports on
     Outputs are combinational from c0_detect_i; c0_detect_i must be synchronous to clk.
 
 Interpretation used by the reference model:
-  - A sample of c0_detect_i is taken at every clock edge with clk_en or rst high
-    (rst samples so a level held across reset is not reported as an edge).
-  - c0_valid_o = clk_en & ~rst; edge outputs are only checked while it is high.
+  - A sample of c0_detect_i is taken at every clock edge with clk_en high and rst low.
+  - The detector is armed by its first sample after power-up or rst; rst disarms it
+    even when clk_en is low. There is no previous value until then, so no edge may be reported.
+  - c0_valid_o = clk_en & ~rst & armed; edge outputs are only checked while it is high.
   - While valid, edges compare the live c0_detect_i against the last sample.
-  - Before the first sample there is no previous value, so no edge may be reported.
   - Unconnected ports take their RTL defaults (clk_en = 1, rst = 0).
 """
 
@@ -31,10 +31,11 @@ RAND_SEED = 0xDEAD_BEEF
 
 
 class EdgeDetectModel:
-    """Reference model: last-sample register plus combinational edge outputs."""
+    """Reference model: last-sample and armed registers plus combinational edge outputs."""
 
-    def __init__(self, prev):
+    def __init__(self, prev, armed=True):
         self.prev = prev
+        self.armed = armed
 
     @staticmethod
     def controls(clk_en, rst):
@@ -42,13 +43,16 @@ class EdgeDetectModel:
 
     def clock(self, detect, clk_en, rst):
         clk_en, rst = self.controls(clk_en, rst)
-        if clk_en or rst:
+        if rst:
+            self.armed = False
+        elif clk_en:
             self.prev = detect
+            self.armed = True
 
     def outputs(self, detect, clk_en, rst):
         """Expected (valid, rising, falling, either) for the current inputs."""
         clk_en, rst = self.controls(clk_en, rst)
-        valid = int(clk_en and not rst)
+        valid = int(clk_en and not rst and self.armed)
         rising = ~self.prev & detect & mask(WIDTH)
         falling = self.prev & ~detect & mask(WIDTH)
         return valid, rising, falling, rising | falling
@@ -92,7 +96,7 @@ async def step(dut, model, detect, clk_en, rst, ctx):
 
 
 async def prime(dut, detect=0):
-    """Take one enabled sample so the DUT and a fresh model agree on the previous value"""
+    """Take one enabled sample so the DUT is armed and agrees with a fresh model on the previous value"""
     dut.rst.value = 0
     dut.clk_en.value = 1
     dut.c0_detect_i.value = detect
@@ -103,7 +107,7 @@ async def prime(dut, detect=0):
 
 @cocotb.test()
 async def test_power_up(dut):
-    """No sample has been taken yet, so a high input is not an edge (must run first)"""
+    """Not armed until the first sample, so a high input is not an edge (must run first)"""
     dut.rst.value = 0
     dut.clk_en.value = 1
     dut.c0_detect_i.value = mask(WIDTH)
@@ -170,29 +174,33 @@ async def test_clk_en_stall(dut):
 
 @cocotb.test(skip=not CONNECT_RST)
 async def test_reset(dut):
-    """rst drops valid; a level held across reset is not an edge afterwards"""
+    """rst drops valid and disarms; the first sample after reset only re-arms"""
     start_clock(dut.clk)
     model = await prime(dut, 0)
 
     await step(dut, model, mask(WIDTH), 1, 0, "rise before reset")
     for cycle in range(3):
         await step(dut, model, mask(WIDTH), 1, 1, f"reset {cycle}")
-    await step(dut, model, mask(WIDTH), 1, 0, "held high across reset")
+    await step(dut, model, mask(WIDTH), 1, 0, "arming sample, held high")
+    await step(dut, model, mask(WIDTH), 1, 0, "held high after re-arm")
 
-    # Changes during reset are absorbed; only the post-reset change is an edge
+    # The arming sample is the new reference, whatever was seen before or during reset
     await step(dut, model, 0, 1, 1, "reset, fall")
     await step(dut, model, mask(WIDTH), 1, 1, "reset, rise")
-    await step(dut, model, 0, 1, 0, "fall after reset")
+    await step(dut, model, 0, 1, 0, "arming sample, low")
+    await step(dut, model, mask(WIDTH), 1, 0, "rise after re-arm")
 
 
 @cocotb.test(skip=not (CONNECT_RST and CONNECT_CLK_EN))
 async def test_reset_while_stalled(dut):
-    """rst samples the input even when clk_en is low"""
+    """rst disarms even when clk_en is low"""
     start_clock(dut.clk)
     model = await prime(dut, 0)
 
     await step(dut, model, mask(WIDTH), 0, 1, "stalled reset, input high")
-    await step(dut, model, mask(WIDTH), 1, 0, "no rise after stalled reset")
+    await step(dut, model, mask(WIDTH), 0, 0, "still stalled")
+    await step(dut, model, mask(WIDTH), 1, 0, "arming sample, no rise")
+    await step(dut, model, 0, 1, 0, "fall after re-arm")
 
 
 @cocotb.test()
