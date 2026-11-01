@@ -31,6 +31,7 @@ verif/
 
 | Module | Description | Parameters | Inputs | Outputs |
 |---|---|---|---|---|
+| [`bin2gray`](rtl/prim/bin2gray.sv) | Combinational binary to reflected Gray code conversion. | `int Width = 8` (>= 1) | `[Width-1:0] c0_bin_i` | `[Width-1:0] c0_gray_o` |
 | [`delay`](rtl/prim/delay.sv) | Delays data by `Depth` enabled cycles; combinational when `Depth == 0`. Leave `rst` unconnected to keep SRL inference. | `type DataType = logic`<br>`int Depth = 1` (>= 0) | `clk`<br>`clk_en = 1`<br>`rst = 0`<br>`DataType c0_data_i` | `DataType cX_data_o` |
 | [`delay_valid`](rtl/prim/delay_valid.sv) | Delays a valid/data pair together by `Depth` enabled cycles. `rst` clears only the valid line, so data still maps to SRLs. | `type DataType = logic`<br>`int Depth = 1` (>= 0) | `clk`<br>`clk_en = 1`<br>`rst = 0`<br>`c0_valid_i`<br>`DataType c0_data_i` | `cX_valid_o`<br>`DataType cX_data_o` |
 | [`edge_detect`](rtl/prim/edge_detect.sv) | Per-bit rising/falling/either edge pulses, valid when `c0_valid_o` is high. The first enabled sample after power-up or `rst` only arms the detector. | `int Width = 1` (>= 1) | `clk`<br>`clk_en = 1`<br>`rst = 0`<br>`[Width-1:0] c0_detect_i` | `c0_valid_o`<br>`[Width-1:0] c0_rising_o`<br>`[Width-1:0] c0_falling_o`<br>`[Width-1:0] c0_either_o` |
