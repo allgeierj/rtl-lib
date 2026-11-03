@@ -103,8 +103,9 @@ Test behaviour:
 
 ### After adding a module
 
-Add a row to the module table in `README.md`, kept in alphabetical order, with parameters and their limits, inputs and
-outputs. Then run `make regress`.
+Add a row to the module table in `README.md`, with parameters and their limits, inputs and outputs. Place it next to
+related modules rather than alphabetically, so pairs like `bin2gray` and `gray2bin` stay together. Then run
+`make regress`.
 
 ## RTL conventions
 
