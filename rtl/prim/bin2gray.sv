@@ -1,3 +1,6 @@
+// Combinational binary to reflected Gray code conversion: gray = bin ^ (bin >> 1).
+// Consecutive binary values map to Gray codes differing in one bit, e.g. for counters crossing
+// clock domains through sync_ff. The inverse is gray2bin.
 module bin2gray
 #(
   parameter int Width = 8

@@ -1,3 +1,5 @@
+// Combinational reflected Gray code to binary conversion; the inverse of bin2gray.
+// Each binary bit is the XOR of all Gray bits at or above it, so the logic depth grows with Width.
 module gray2bin
 #(
   parameter int Width = 8
