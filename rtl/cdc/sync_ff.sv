@@ -1,12 +1,21 @@
+// Synchronises c0_data_i into the capture_clk domain through Stages flops, all marked
+// ASYNC_REG and powering up as zero. Latency is Stages capture_clk cycles, +/- 1 from
+// metastability resolution.
+// Each bit is synchronised independently: for Width > 1, the data must be Gray-coded or
+// otherwise change one bit at a time, or the output can briefly show an incoherent mix.
+// c0_data_i must come straight from a source-domain register (no combinational logic), and
+// the path into the first stage needs a set_false_path or set_max_delay -datapath_only.
+// No clk_en or rst, and no state struct: the chain must clock every cycle, and a plain
+// array keeps the cell names (sync_reg_reg[*]) easy to match in constraints.
 module sync_ff
 #(
-  parameter int Width = 1, // Incoherent for Width > 1
+  parameter int Width = 1,
   parameter int Stages = 2,
   localparam int Latency = Stages
 )
 (
-  input logic capture_clk, // capture clock
-  input logic [Width-1:0] c0_data_i, // Should be driven from a reg
+  input logic capture_clk,
+  input logic [Width-1:0] c0_data_i,
   output logic [Width-1:0] cL_data_o
 );
 
