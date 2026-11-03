@@ -66,7 +66,7 @@ async def step(dut, model, data, clk_en, rst, ctx):
     await Timer(1, unit="ns")
 
     model.clock(data, clk_en, rst)
-    result = int(dut.cX_data_o.value)
+    result = int(dut.cL_data_o.value)
     assert result == model.output, (
         f"(W={WIDTH}, D={DEPTH}, rst={'on' if CONNECT_RST else 'off'}, "
         f"clk_en={'on' if CONNECT_CLK_EN else 'off'}) {ctx} "
@@ -82,13 +82,13 @@ async def test_reset_value(dut):
     dut.clk_en.value = 1
     dut.c0_data_i.value = mask(WIDTH)
     await Timer(1, unit="ns")
-    assert int(dut.cX_data_o.value) == 0, "output not 0 before first edge"
+    assert int(dut.cL_data_o.value) == 0, "output not 0 before first edge"
 
     start_clock(dut.clk)
     for cycle in range(DEPTH - 1):
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
-        result = int(dut.cX_data_o.value)
+        result = int(dut.cL_data_o.value)
         assert result == 0, f"cycle {cycle}: got 0x{result:x}, expected 0"
 
 
@@ -111,7 +111,7 @@ async def test_random_streaming(dut):
         # After edge `cycle`, the output holds the value sampled DEPTH-1 edges earlier
         src = cycle - DEPTH + 1
         if DEPTH > 0 and src >= 0:
-            result = int(dut.cX_data_o.value)
+            result = int(dut.cL_data_o.value)
             assert result == inputs[src], (
                 f"(W={WIDTH}, D={DEPTH}) cycle {cycle}: "
                 f"got 0x{result:x}, expected 0x{inputs[src]:x}"
@@ -134,7 +134,7 @@ async def test_reset_clears(dut):
     await RisingEdge(dut.clk)
     dut.rst.value = 0
     await Timer(1, unit="ns")
-    result = int(dut.cX_data_o.value)
+    result = int(dut.cL_data_o.value)
     assert result == 0, f"after reset edge: got 0x{result:x}, expected 0"
 
     # Zeros drain out over the next DEPTH-1 edges, then post-reset data arrives
@@ -142,7 +142,7 @@ async def test_reset_clears(dut):
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         expected = mask(WIDTH) if cycle == DEPTH - 1 else 0
-        result = int(dut.cX_data_o.value)
+        result = int(dut.cL_data_o.value)
         assert result == expected, (
             f"cycle {cycle} after reset: got 0x{result:x}, expected 0x{expected:x}"
         )
@@ -159,7 +159,7 @@ async def test_clk_en_stall(dut):
     for cycle in range(DEPTH):
         await step(dut, model, random.randint(0, mask(WIDTH)), 1, 0, f"fill {cycle}")
 
-    held = int(dut.cX_data_o.value)
+    held = int(dut.cL_data_o.value)
     for cycle in range(DEPTH + 2):
         result = await step(dut, model, random.randint(0, mask(WIDTH)), 0, 0, f"stall {cycle}")
         assert result == held, f"stall {cycle}: output changed 0x{held:x} -> 0x{result:x}"
@@ -185,14 +185,14 @@ async def test_reset_while_stalled(dut):
     await RisingEdge(dut.clk)
     dut.rst.value = 0
     await Timer(1, unit="ns")
-    result = int(dut.cX_data_o.value)
+    result = int(dut.cL_data_o.value)
     assert result == 0, f"after stalled reset edge: got 0x{result:x}, expected 0"
 
     # Still stalled: the cleared line must stay cleared
     for cycle in range(DEPTH + 1):
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
-        result = int(dut.cX_data_o.value)
+        result = int(dut.cL_data_o.value)
         assert result == 0, f"stall {cycle} after reset: got 0x{result:x}, expected 0"
 
 
@@ -224,5 +224,5 @@ async def test_passthrough(dut):
         dut.clk_en.value = random.randint(0, 1)
         dut.rst.value = random.randint(0, 1)
         await Timer(1, unit="ns")
-        result = int(dut.cX_data_o.value)
+        result = int(dut.cL_data_o.value)
         assert result == value, f"got 0x{result:x}, expected 0x{value:x}"

@@ -3,7 +3,8 @@
 module delay_valid
 #(
   parameter type DataType = logic,
-  parameter int Depth = 1
+  parameter int Depth = 1,
+  localparam int Latency = Depth
 )
 (
   input logic clk,
@@ -11,8 +12,8 @@ module delay_valid
   input logic rst = 1'b0,
   input logic c0_valid_i,
   input DataType c0_data_i,
-  output logic cX_valid_o,
-  output DataType cX_data_o
+  output logic cL_valid_o,
+  output DataType cL_data_o
 );
 
 delay #(
@@ -24,7 +25,7 @@ valid_delay (
   .clk_en(clk_en),
   .rst(rst),
   .c0_data_i(c0_valid_i),
-  .cX_data_o(cX_valid_o)
+  .cL_data_o(cL_valid_o)
 );
 
 delay #(
@@ -35,7 +36,7 @@ data_delay (
   .clk(clk),
   .clk_en(clk_en),
   .c0_data_i(c0_data_i),
-  .cX_data_o(cX_data_o)
+  .cL_data_o(cL_data_o)
 );
 
 endmodule

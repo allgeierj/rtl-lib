@@ -50,7 +50,7 @@ class DelayValidModel:
 
 
 def read_outputs(dut):
-    return int(dut.cX_valid_o.value), int(dut.cX_data_o.value)
+    return int(dut.cL_valid_o.value), int(dut.cL_data_o.value)
 
 
 @cocotb.test(skip=DEPTH == 0)

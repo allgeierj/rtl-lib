@@ -4,6 +4,7 @@ module delay
 #(
   parameter type DataType = logic,
   parameter int Depth = 1,
+  localparam int Latency = Depth,
   localparam int ArrayDepth = (Depth > 0) ? Depth : 1
 )
 (
@@ -11,7 +12,7 @@ module delay
   input logic clk_en = 1'b1,
   input logic rst = 1'b0,
   input DataType c0_data_i,
-  output DataType cX_data_o 
+  output DataType cL_data_o
 );
 
 if(Depth < 0) $error("Depth must be >= 0 (got %0d)", Depth);
@@ -22,7 +23,7 @@ typedef struct packed {
 delay_state_ts reg_d, reg_q = '0;
 
 // Pass through if Depth == 0
-assign cX_data_o = (Depth > 0) ? reg_q.delay_line[Depth-1] : c0_data_i;
+assign cL_data_o = (Depth > 0) ? reg_q.delay_line[Depth-1] : c0_data_i;
 
 always_comb begin
   reg_d = reg_q;

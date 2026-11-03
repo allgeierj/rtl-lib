@@ -13,22 +13,22 @@ module delay_valid_tb
   input  logic             rst,
   input  logic             c0_valid_i,
   input  logic [Width-1:0] c0_data_i,
-  output logic             cX_valid_o,
-  output logic [Width-1:0] cX_data_o
+  output logic             cL_valid_o,
+  output logic [Width-1:0] cL_data_o
 );
 
 if(ConnectRst && ConnectClkEn) begin : g_dut
   delay_valid #(.DataType(logic [Width-1:0]), .Depth(Depth))
-  u_delay_valid (.clk, .clk_en, .rst, .c0_valid_i, .c0_data_i, .cX_valid_o, .cX_data_o);
+  u_delay_valid (.clk, .clk_en, .rst, .c0_valid_i, .c0_data_i, .cL_valid_o, .cL_data_o);
 end else if(ConnectRst) begin : g_dut
   delay_valid #(.DataType(logic [Width-1:0]), .Depth(Depth))
-  u_delay_valid (.clk, .rst, .c0_valid_i, .c0_data_i, .cX_valid_o, .cX_data_o);
+  u_delay_valid (.clk, .rst, .c0_valid_i, .c0_data_i, .cL_valid_o, .cL_data_o);
 end else if(ConnectClkEn) begin : g_dut
   delay_valid #(.DataType(logic [Width-1:0]), .Depth(Depth))
-  u_delay_valid (.clk, .clk_en, .c0_valid_i, .c0_data_i, .cX_valid_o, .cX_data_o);
+  u_delay_valid (.clk, .clk_en, .c0_valid_i, .c0_data_i, .cL_valid_o, .cL_data_o);
 end else begin : g_dut
   delay_valid #(.DataType(logic [Width-1:0]), .Depth(Depth))
-  u_delay_valid (.clk, .c0_valid_i, .c0_data_i, .cX_valid_o, .cX_data_o);
+  u_delay_valid (.clk, .c0_valid_i, .c0_data_i, .cL_valid_o, .cL_data_o);
 end
 
 endmodule
