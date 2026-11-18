@@ -113,6 +113,8 @@ related modules rather than alphabetically, so pairs like `bin2gray` and `gray2b
   combinational from the current inputs. Ports also end in `_i` or `_o`.
 - When latency depends on parameters, declare `localparam int Latency = ...` in the parameter port list and name the
   delayed outputs `cL_`, meaning `Latency` cycles after `c0_`. Avoid `cX_`, which reads as an unknown/undriven value.
+- Ports that are not synchronous to the module's clock, or whose latency differs by edge (such as `reset_sync`, which
+  asserts asynchronously and deasserts after `Stages` edges), take no cycle prefix. Explain why in the header comment.
 - `clk_en` defaults to `1'b1` and `rst` (synchronous, active high) to `1'b0`, so either can be left unconnected.
 - Clocked modules hold their state in a packed struct `<module>_state_ts` with `reg_d` and `reg_q = '0`, computed in
   `always_comb` and registered in `always_ff`, where `rst` is assigned after `clk_en` so that it takes priority.

@@ -43,6 +43,7 @@ verif/
 | Module | Description | Parameters | Inputs | Outputs |
 |---|---|---|---|---|
 | [`sync_ff`](rtl/cdc/sync_ff.sv) | `Stages`-flop synchroniser into the `capture_clk` domain, with `ASYNC_REG` on every stage, powering up as zero. Bits are synchronised independently, so for `Width > 1` the data must be Gray-coded or otherwise change one bit at a time. `c0_data_i` should come straight from a source-domain register, and the input path needs a false-path or max-delay constraint. | `int Width = 1` (>= 1)<br>`int Stages = 2` (>= 2) | `capture_clk`<br>`[Width-1:0] c0_data_i` | `[Width-1:0] cL_data_o` |
+| [`reset_sync`](rtl/cdc/reset_sync.sv) | Reset synchroniser: `rst_o` asserts asynchronously as soon as `async_rst_i` rises and deasserts `Stages` `clk` edges after it falls. Active high, `ASYNC_REG` on every stage, powering up asserted. `async_rst_i` should come from a register or pin, and its path to the stage presets needs a false-path constraint. | `int Stages = 2` (>= 2) | `clk`<br>`async_rst_i` | `rst_o` |
 
 ## Running tests
 
