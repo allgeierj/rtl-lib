@@ -6,7 +6,7 @@ module ram_sp
   parameter type AddressType = logic [11:0],
   parameter type DataType = logic [8:0], // 4k x 9
   parameter string InitFile = "",
-  parameter string RamStyle = "block" // TODO: Verify support for others
+  parameter RamStyle = "block" // TODO: Verify support for others
 )
 (
   input logic clk,
@@ -16,7 +16,6 @@ module ram_sp
   input DataType c0_wr_data_i,
   output DataType c1_rd_data_o
 );
-
 
   (* ram_style = RamStyle *)
   DataType memory [2**$bits(AddressType)];
