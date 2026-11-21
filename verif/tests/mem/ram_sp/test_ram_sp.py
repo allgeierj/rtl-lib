@@ -2,9 +2,10 @@
 cocotb tests for the ram_sp module.
 
 Verifies the synchronous read with Latency = 1 + OutputReg cycles, writes to every address,
-read-first behaviour (reading the address being written returns the old word), that clk_en
-low blocks writes and holds the whole read pipeline, the clk_en default (1) when unconnected,
-and InitFile loading.
+read-first behaviour (reading the address being written returns the old word), that
+c0_rd_enable_i low keeps cL_rd_data_o on the last word read while writes still land, that
+clk_en low blocks writes and holds the whole read pipeline, the clk_en default (1) when
+unconnected, and InitFile loading.
 
 Words are undefined until written (or loaded from InitFile) and cL_rd_data_o is undefined
 until the first enabled read reaches it, so the model tracks those values as unknown and
@@ -31,6 +32,7 @@ LATENCY = 1 + OUTPUT_REG
 INIT_FILE = Path(__file__).parent / "ram_sp_init.hex"
 NUM_VERIFY_CYCLES = 1000
 STALL_PROBABILITY = 0.25
+READ_PROBABILITY = 0.5
 WRITE_PROBABILITY = 0.5
 RAND_SEED = 0xDEAD_BEEF
 
@@ -38,7 +40,8 @@ RAND_SEED = 0xDEAD_BEEF
 class RamModel:
     """Reference model: DEPTH words, read-first, reads returned LATENCY enabled cycles later.
 
-    Unknown words and unknown outputs are None. An unconnected clk_en takes its RTL default
+    An enabled cycle without a read repeats the previous read, so the output keeps the last
+    word read. Unknown words and unknown outputs are None. An unconnected clk_en takes its RTL default
     of 1, so the value driven on its pin is ignored.
     """
 
@@ -46,11 +49,11 @@ class RamModel:
         self.mem = dict(contents or {})
         self.reads = deque([None] * LATENCY, maxlen=LATENCY)
 
-    def clock(self, clk_en, wr_en, addr, data):
+    def clock(self, clk_en, rd_en, wr_en, addr, data):
         clk_en = clk_en if CONNECT_CLK_EN else 1
         if not clk_en:
             return
-        self.reads.appendleft(self.mem.get(addr))
+        self.reads.appendleft(self.mem.get(addr) if rd_en else self.reads[0])
         if wr_en:
             self.mem[addr] = data
 
@@ -67,25 +70,26 @@ def load_init_file():
     return words
 
 
-async def step(dut, model, clk_en, wr_en, addr, data, ctx):
+async def step(dut, model, clk_en, wr_en, addr, data, ctx, rd_en=1):
     """Drive one cycle, clock the model, and check cL_rd_data_o after the edge.
 
     Returns the output, or None when the model says it is unknown.
     """
     dut.clk_en.value = clk_en
+    dut.c0_rd_enable_i.value = rd_en
     dut.c0_wr_enable_i.value = wr_en
     dut.c0_address_i.value = addr
     dut.c0_wr_data_i.value = data
     await RisingEdge(dut.clk)
     await Timer(1, unit="ns")
 
-    model.clock(clk_en, wr_en, addr, data)
+    model.clock(clk_en, rd_en, wr_en, addr, data)
     if model.rd_data is None:
         return None
     result = int(dut.cL_rd_data_o.value)
     assert result == model.rd_data, (
         f"(AW={ADDR_WIDTH}, W={WIDTH}, L={LATENCY}, clk_en={'on' if CONNECT_CLK_EN else 'off'}) "
-        f"{ctx} [clk_en={clk_en} we={wr_en} addr=0x{addr:x} wdata=0x{data:x}]: "
+        f"{ctx} [clk_en={clk_en} re={rd_en} we={wr_en} addr=0x{addr:x} wdata=0x{data:x}]: "
         f"got 0x{result:x}, expected 0x{model.rd_data:x}"
     )
     return result
@@ -158,6 +162,35 @@ async def test_read_first(dut):
         )
 
 
+@cocotb.test()
+async def test_rd_enable(dut):
+    """With c0_rd_enable_i low, writes still land and cL_rd_data_o keeps the last word read"""
+    start_clock(dut.clk)
+    random.seed(RAND_SEED)
+    model = RamModel()
+
+    a, b = random.sample(range(DEPTH), 2)
+    word_a = random.randint(0, mask(WIDTH))
+    other = word_a ^ mask(WIDTH)
+    await step(dut, model, 1, 1, a, word_a, "write a")
+    await step(dut, model, 1, 1, b, other, "write b")
+    await step(dut, model, 1, 0, b, 0, "read b")
+    # A single-cycle read: with OutputReg, word a must still reach the output after rd_en drops
+    await step(dut, model, 1, 0, a, 0, "read a")
+
+    # Any of these accesses would put `other` on the output if it read the RAM
+    for cycle, (wr_en, addr) in enumerate(((1, b), (1, a), (0, b), (0, a))):
+        result = await step(dut, model, 1, wr_en, addr, other, f"no read {cycle}", rd_en=0)
+        assert result == word_a, (
+            f"(L={LATENCY}) no read {cycle}: got 0x{result:x}, expected last read 0x{word_a:x}"
+        )
+
+    # The writes made with rd_en low landed
+    await step(dut, model, 1, 0, a, 0, "read back a")
+    await step(dut, model, 1, 0, b, 0, "read back b")
+    await drain(dut, model, "final")
+
+
 @cocotb.test(skip=not CONNECT_CLK_EN)
 async def test_clk_en_stall(dut):
     """With clk_en low, writes are ignored and the read pipeline holds while the inputs change"""
@@ -186,7 +219,7 @@ async def test_clk_en_stall(dut):
 
 @cocotb.test()
 async def test_random(dut):
-    """Random writes, reads and clk_en checked against the reference model.
+    """Random reads, writes and clk_en checked against the reference model.
 
     Addresses mostly come from a small pool so reads often hit written words. When clk_en is
     unconnected, the random values on its pin must have no effect.
@@ -198,6 +231,8 @@ async def test_random(dut):
 
     for cycle in range(NUM_VERIFY_CYCLES):
         clk_en = int(random.random() >= STALL_PROBABILITY)
+        rd_en = int(random.random() < READ_PROBABILITY)
         wr_en = int(random.random() < WRITE_PROBABILITY)
         addr = random.choice(pool) if random.random() < 0.9 else random.randrange(DEPTH)
-        await step(dut, model, clk_en, wr_en, addr, random.randint(0, mask(WIDTH)), f"cycle {cycle}")
+        data = random.randint(0, mask(WIDTH))
+        await step(dut, model, clk_en, wr_en, addr, data, f"cycle {cycle}", rd_en=rd_en)

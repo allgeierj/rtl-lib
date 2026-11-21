@@ -1,7 +1,8 @@
 // Single-port RAM, read-first: reading the address being written returns the old word.
 // Read latency is 1, or 2 with OutputReg, which maps onto the RAM primitive's output register
-// (BRAM DOA_REG, URAM OREG). clk_en low blocks writes and holds the read pipeline. Words are X
-// until written unless InitFile ($readmemh hex) is set; cL_rd_data_o is X until the first read.
+// (BRAM DOA_REG, URAM OREG). With c0_rd_enable_i low, cL_rd_data_o keeps the last word read and
+// writes still land. clk_en low blocks writes and holds the read pipeline. Words are X until
+// written unless InitFile ($readmemh hex) is set; cL_rd_data_o is X until the first read.
 module ram_sp
 #(
   parameter type AddressType = logic [11:0],
