@@ -5,8 +5,10 @@ module ram_sp
 #(
   parameter type AddressType = logic [11:0],
   parameter type DataType = logic [8:0], // 4k x 9
+  parameter bit OutputReg = 1'b0,
   parameter string InitFile = "",
-  parameter RamStyle = "block" // TODO: Verify support for others
+  parameter RamStyle = "block",
+  localparam int Latency = 1 + OutputReg
 )
 (
   input logic clk,
@@ -14,11 +16,12 @@ module ram_sp
   input logic c0_wr_enable_i,
   input AddressType c0_address_i,
   input DataType c0_wr_data_i,
-  output DataType c1_rd_data_o
+  output DataType cL_rd_data_o
 );
 
   (* ram_style = RamStyle *)
   DataType memory [2**$bits(AddressType)];
+  DataType c1_rd_data;
 
   initial begin
     if(InitFile != "") begin
@@ -28,7 +31,7 @@ module ram_sp
 
   always_ff @(posedge clk) begin
     if(clk_en) begin
-      c1_rd_data_o <= memory[c0_address_i];
+      c1_rd_data <= memory[c0_address_i];
     end
   end
 
@@ -36,6 +39,17 @@ module ram_sp
     if(clk_en && c0_wr_enable_i) begin
       memory[c0_address_i] <= c0_wr_data_i;
     end
+  end
+
+  if(OutputReg) begin
+    always_ff @(posedge clk) begin
+      if(clk_en) begin
+        cL_rd_data_o <= c1_rd_data;
+      end
+    end
+  end
+  else begin
+    assign cL_rd_data_o = c1_rd_data;
   end
 
 endmodule
