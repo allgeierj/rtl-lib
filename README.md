@@ -24,6 +24,8 @@ verif/
 
 - Signal names carry a cycle prefix: `c0_` is the input cycle, `cL_` is an output some number
   of cycles later, and a `c0_` output is combinational from the current inputs.
+- Modules with more than one clock put the clock domain before the cycle prefix: `rd_c0_address_i`
+  is synchronous to `rd_clk` and counts `rd_clk` cycles. Single-clock modules use plain `clk`.
 - `clk_en` defaults to `1'b1` and `rst` (synchronous, active high) defaults to `1'b0`, so either
   can be left unconnected.
 

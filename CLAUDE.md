@@ -115,6 +115,11 @@ related modules rather than alphabetically, so pairs like `bin2gray` and `gray2b
   delayed outputs `cL_`, meaning `Latency` cycles after `c0_`. Avoid `cX_`, which reads as an unknown/undriven value.
 - Ports that are not synchronous to the module's clock, or whose latency differs by edge (such as `reset_sync`, which
   asserts asynchronously and deasserts after `Stages` edges), take no cycle prefix. Explain why in the header comment.
+- In a module with more than one clock, every synchronous port starts with its clock domain, then the cycle prefix:
+  `<domain>_<cycle>_<name>_<i|o>`. `rd_c0_address_i` is synchronous to `rd_clk`, and its cycle count is in `rd_clk`
+  cycles, so cycle numbers only compare within a domain. Each domain has `<domain>_clk`, plus `<domain>_clk_en` and
+  `<domain>_rst` where used, with the usual defaults. Group ports by domain. Single-clock modules keep plain `clk`,
+  `clk_en` and `rst`, with no domain prefix.
 - `clk_en` defaults to `1'b1` and `rst` (synchronous, active high) to `1'b0`, so either can be left unconnected.
 - Clocked modules hold their state in a packed struct `<module>_state_ts` with `reg_d` and `reg_q = '0`, computed in
   `always_comb` and registered in `always_ff`, where `rst` is assigned after `clk_en` so that it takes priority.
