@@ -1,3 +1,6 @@
+// Single-port RAM with 1-cycle read latency. Read-first: reading the address being written
+// returns the old word. clk_en low blocks writes and holds c1_rd_data_o. Words are X until
+// written unless InitFile ($readmemh hex) is set; c1_rd_data_o is X until the first read.
 module ram_sp
 #(
   parameter type AddressType = logic [11:0],
