@@ -14,6 +14,7 @@ module ram_sp
 (
   input logic clk,
   input logic clk_en = 1'b1,
+  input logic c0_rd_enable_i,
   input logic c0_wr_enable_i,
   input AddressType c0_address_i,
   input DataType c0_wr_data_i,
@@ -31,7 +32,7 @@ module ram_sp
   end
 
   always_ff @(posedge clk) begin
-    if(clk_en) begin
+    if(clk_en && c0_rd_enable_i) begin
       c1_rd_data <= memory[c0_address_i];
     end
   end
