@@ -50,7 +50,7 @@ verif/
 
 | Module | Description | Parameters | Inputs | Outputs |
 |---|---|---|---|---|
-| [`ram_sp`](rtl/mem/ram_sp.sv) | Single-port RAM of `2**$bits(AddressType)` words with 1-cycle read latency. Read-first: reading the address being written returns the old word. `clk_en` low blocks writes and holds `c1_rd_data_o`. Words are undefined until written unless `InitFile` is set, and `c1_rd_data_o` is undefined until the first read. | `type AddressType = logic [11:0]`<br>`type DataType = logic [8:0]`<br>`string InitFile = ""` (`$readmemh` hex)<br>`string RamStyle = "block"` (Vivado `ram_style`) | `clk`<br>`clk_en = 1`<br>`c0_wr_enable_i`<br>`AddressType c0_address_i`<br>`DataType c0_wr_data_i` | `DataType c1_rd_data_o` |
+| [`ram_sp`](rtl/mem/ram_sp.sv) | Single-port RAM of `2**$bits(AddressType)` words. Read latency is 1, or 2 with `OutputReg`, which maps onto the RAM primitive's output register (BRAM `DOA_REG`, URAM `OREG`). Read-first: reading the address being written returns the old word. `clk_en` low blocks writes and holds the read pipeline. Words are undefined until written unless `InitFile` is set, and `cL_rd_data_o` is undefined until the first read reaches it. | `type AddressType = logic [11:0]`<br>`type DataType = logic [8:0]`<br>`bit OutputReg = 0`<br>`string InitFile = ""` (`$readmemh` hex)<br>`RamStyle = "block"` (Vivado `ram_style`; untyped, as Vivado rejects a `string` here) | `clk`<br>`clk_en = 1`<br>`c0_wr_enable_i`<br>`AddressType c0_address_i`<br>`DataType c0_wr_data_i` | `DataType cL_rd_data_o` |
 
 ## Running tests
 

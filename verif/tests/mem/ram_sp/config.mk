@@ -14,6 +14,11 @@ PARAM_SETS = \
 	AddrWidth=14,Width=32 \
 	AddrWidth=1,Width=1,ConnectClkEn=0 \
 	AddrWidth=4,Width=8,ConnectClkEn=0 \
-	AddrWidth=4,Width=8,UseInitFile=1
+	AddrWidth=4,Width=8,UseInitFile=1 \
+	AddrWidth=1,Width=1,OutputReg=1 \
+	AddrWidth=12,Width=9,OutputReg=1 \
+	AddrWidth=6,Width=72,OutputReg=1 \
+	AddrWidth=4,Width=8,OutputReg=1,ConnectClkEn=0 \
+	AddrWidth=4,Width=8,OutputReg=1,UseInitFile=1
 
 COMPILE_ARGS += +define+RAM_SP_INIT_FILE=\"$(TEST_DIR)/ram_sp_init.hex\"

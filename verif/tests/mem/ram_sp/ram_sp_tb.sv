@@ -8,6 +8,7 @@ module ram_sp_tb
 #(
   parameter int AddrWidth = 12,
   parameter int Width = 9,
+  parameter bit OutputReg = 1'b0,
   parameter bit ConnectClkEn = 1'b1,
   parameter bit UseInitFile = 1'b0
 )
@@ -17,17 +18,17 @@ module ram_sp_tb
   input  logic                 c0_wr_enable_i,
   input  logic [AddrWidth-1:0] c0_address_i,
   input  logic [Width-1:0]     c0_wr_data_i,
-  output logic [Width-1:0]     c1_rd_data_o
+  output logic [Width-1:0]     cL_rd_data_o
 );
 
 localparam string InitFile = UseInitFile ? `RAM_SP_INIT_FILE : "";
 
 if(ConnectClkEn) begin : g_dut
-  ram_sp #(.AddressType(logic [AddrWidth-1:0]), .DataType(logic [Width-1:0]), .InitFile(InitFile))
-  u_ram_sp (.clk, .clk_en, .c0_wr_enable_i, .c0_address_i, .c0_wr_data_i, .c1_rd_data_o);
+  ram_sp #(.AddressType(logic [AddrWidth-1:0]), .DataType(logic [Width-1:0]), .OutputReg(OutputReg), .InitFile(InitFile))
+  u_ram_sp (.clk, .clk_en, .c0_wr_enable_i, .c0_address_i, .c0_wr_data_i, .cL_rd_data_o);
 end else begin : g_dut
-  ram_sp #(.AddressType(logic [AddrWidth-1:0]), .DataType(logic [Width-1:0]), .InitFile(InitFile))
-  u_ram_sp (.clk, .c0_wr_enable_i, .c0_address_i, .c0_wr_data_i, .c1_rd_data_o);
+  ram_sp #(.AddressType(logic [AddrWidth-1:0]), .DataType(logic [Width-1:0]), .OutputReg(OutputReg), .InitFile(InitFile))
+  u_ram_sp (.clk, .c0_wr_enable_i, .c0_address_i, .c0_wr_data_i, .cL_rd_data_o);
 end
 
 endmodule
