@@ -10,6 +10,7 @@ modules, categories and tests will be added over time, and existing interfaces m
 rtl/
   prim/                 basic primitives (delay lines, edge detection, ...)
   cdc/                  clock domain crossing (synchronisers, ...)
+  mem/                  memories (RAMs, ...)
 verif/
   Makefile              cocotb test runner
   tb_lib/               shared Python helpers for testbenches
@@ -44,6 +45,12 @@ verif/
 |---|---|---|---|---|
 | [`sync_ff`](rtl/cdc/sync_ff.sv) | `Stages`-flop synchroniser into the `capture_clk` domain, with `ASYNC_REG` on every stage, powering up as zero. Bits are synchronised independently, so for `Width > 1` the data must be Gray-coded or otherwise change one bit at a time. `c0_data_i` should come straight from a source-domain register, and the input path needs a false-path or max-delay constraint. | `int Width = 1` (>= 1)<br>`int Stages = 2` (>= 2) | `capture_clk`<br>`[Width-1:0] c0_data_i` | `[Width-1:0] cL_data_o` |
 | [`reset_sync`](rtl/cdc/reset_sync.sv) | Reset synchroniser: `rst_o` asserts asynchronously as soon as `async_rst_i` rises and deasserts `Stages` `clk` edges after it falls. Active high, `ASYNC_REG` on every stage, powering up asserted. `async_rst_i` should come from a register or pin, and its path to the stage presets needs a false-path constraint. | `int Stages = 2` (>= 2) | `clk`<br>`async_rst_i` | `rst_o` |
+
+### `mem`
+
+| Module | Description | Parameters | Inputs | Outputs |
+|---|---|---|---|---|
+| [`ram_sp`](rtl/mem/ram_sp.sv) | Single-port RAM of `2**$bits(AddressType)` words with 1-cycle read latency. Read-first: reading the address being written returns the old word. `clk_en` low blocks writes and holds `c1_rd_data_o`. Words are undefined until written unless `InitFile` is set, and `c1_rd_data_o` is undefined until the first read. | `type AddressType = logic [11:0]`<br>`type DataType = logic [8:0]`<br>`string InitFile = ""` (`$readmemh` hex)<br>`string RamStyle = "block"` (Vivado `ram_style`) | `clk`<br>`clk_en = 1`<br>`c0_wr_enable_i`<br>`AddressType c0_address_i`<br>`DataType c0_wr_data_i` | `DataType c1_rd_data_o` |
 
 ## Running tests
 
