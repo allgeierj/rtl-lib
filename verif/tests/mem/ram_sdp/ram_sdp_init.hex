@@ -1,0 +1,5 @@
+// ram_sdp test image: 16 words x 8 bits (AddrWidth=4, Width=8)
+5a c3 01 fe
+80 7f 11 ee
+22 dd 33 cc
+44 bb 55 aa

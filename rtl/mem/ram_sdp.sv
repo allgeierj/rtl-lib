@@ -1,3 +1,10 @@
+// Simple dual-port RAM: writes on wr_clk, reads on rd_clk. Read latency is 1 rd_clk cycle, or 2
+// with OutputReg. With rd_c0_enable_i low, rd_cL_data_o keeps the last word read. rd_clk_en low
+// holds the read pipeline; wr_clk_en low blocks writes. Reading the address being written returns
+// the old word when both ports share a clock, and is undefined with separate clocks. Separate
+// clocks rule out URAM, and distributed RAM then needs a wr_clk -> rd_clk timing constraint.
+// Words are X until written unless InitFile ($readmemh hex) is set; rd_cL_data_o is X until the
+// first read.
 module ram_sdp
 #(
   parameter type AddressType = logic [11:0],
